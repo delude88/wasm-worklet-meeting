@@ -14,7 +14,7 @@
  */
 import createModule from "../wasm/build/main.js"
 
-class MyProcessor extends AudioWorkletProcessor {
+class MyJsOnlyProcessor extends AudioWorkletProcessor {
     running = true
     main = undefined
     level = 1
@@ -78,4 +78,4 @@ class MyProcessor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor("my-processor", MyProcessor)
+registerProcessor("my-js-only-processor", MyJsOnlyProcessor)

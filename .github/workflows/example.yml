@@ -39,7 +39,7 @@ jobs:
         uses: jacobtomlinson/gha-find-replace@v2
         with:
           find: "../public/"
-          replace: ""
+          replace: "./"
           include: "example/index.html"
       - name: Copy result rubberband-processor.js into example folder
         run: cp public/* example/

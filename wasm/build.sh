@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Install emcc via brew: brew install emscripten
-
 mkdir -p build
 
 # emcc <input-file> -o <output-file> -l<library-name>

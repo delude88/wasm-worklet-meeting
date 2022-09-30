@@ -34,7 +34,7 @@ jobs:
           npm install
       - name: Building
         run: |
-          npm run build
+          npm run build:wasm && npm run build
       - name: Preprare example.html
         uses: jacobtomlinson/gha-find-replace@v2
         with:

@@ -1,0 +1,103 @@
+<html lang="en">
+
+<body>
+<h1>Benchmark</h1>
+<p>
+    <button id="start_benchmark">Start benchmark</button>
+</p>
+<ul>
+    <li>
+        Javascript: <span id="js_time"></span>
+    </li>
+    <li>
+        WASM: <span id="wasm_time"></span>
+    </li>
+</ul>
+<canvas id="canvas" width="1280" height="800"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;"></canvas>
+<h1>Audio worklet</h1>
+<p>
+    <button id="start_audio">Start audio engine</button>
+</p>
+<p>
+    <input type="range" id="level" value="1.0" min="0" max="2" step="0.1"/>
+    <label id="level_label" for="level">
+        1.0
+    </label>
+</p>
+
+<script src="./benchmark.js"></script>
+<script>
+    const start_benchmark = document.getElementById("start_benchmark")
+    const js_time = document.getElementById("js_time")
+    const wasm_time = document.getElementById("wasm_time")
+
+    const canvasContext = document.getElementById("canvas").getContext('2d')
+
+    async function runBenchmark() {
+        start_benchmark.setAttribute("disabled", "disabled")
+        console.log("Starting js benchmark")
+        let time = await Benchmark.runJavascriptBenchmark(canvasContext)
+        js_time.innerText = `${time}ms`
+        console.log("JS: " + time)
+        console.log("Starting wasm benchmark")
+        time = await Benchmark.runWASMBenchmark(canvasContext)
+        wasm_time.innerText = `${time}ms`
+        console.log("WASM: " + time)
+        start_benchmark.removeAttribute("disabled")
+    }
+
+    start_benchmark.addEventListener("click", runBenchmark)
+</script>
+<script>
+    let myProcessor;
+
+    async function runNodeExample() {
+        const audioCtx = new AudioContext()
+
+        // Load processor
+        await audioCtx.audioWorklet.addModule("./my-processor.js")
+
+        // Get mic stream
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: false})
+
+        // Create source node
+        const source = audioCtx.createMediaStreamSource(stream)
+
+        // Create processor node
+        myProcessor = new AudioWorkletNode(audioCtx, "my-processor");   // <-- ID
+
+        // Connect source --> processor node
+        source.connect(myProcessor)
+
+        // Connect processor node --> destination
+        myProcessor.connect(audioCtx.destination);
+
+        // Source -> myProcessor -> audioCtx.destination
+
+        myProcessor.port.postMessage(JSON.stringify({
+            key: "level",
+            value: 1.0
+        }))
+    }
+
+    const start_audio_button = document.getElementById("start_audio")
+    start_audio_button.addEventListener("click", runNodeExample)
+    const level = document.getElementById("level");
+    const level_label = document.getElementById("level_label");
+
+    level.addEventListener("change", (event) => {
+        const level = event.currentTarget.value
+        level_label.innerText = level
+        if (myProcessor) {
+            myProcessor.port.postMessage(JSON.stringify({
+                key: "level",
+                value: level
+            }))
+        }
+    })
+
+</script>
+</body>
+
+</html>

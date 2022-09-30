@@ -1,0 +1,85 @@
+<html>
+
+<body>
+<h1>Hello</h1>
+<p>
+    <button id="start_button">START ME NOW</button>
+</p>
+<p>
+    <input type="range" id="level" value="1.0" min="0" max="2" step="0.1"/>
+    <label id="level_label" for="level">
+        1.0
+    </label>
+</p>
+
+<script>
+    //console.log("That's my module -->", Module)
+    // We compiled Module with default parameters, so Module is loaded ASYNC (!)
+    /*
+    Module.postRun = () => {
+        // From here it's safe to use Module
+
+        // PERFORMANCE COMPARISON
+        const another = new Module.Another();
+        console.log("another", another);
+        another.doIt();
+        const start = performance.now();
+        let bla = 0;
+        //TODO: Sort a million string array by name
+        for(let i = 0; i < 99999999; i++) {
+            bla += (bla * i * 299) / 299;
+        }
+        const end = performance.now();
+        console.log("Needed " + (end - start) +  " ms in JS")
+    }*/
+    let myProcessor;
+
+    async function runNodeExample() {
+        const audioCtx = new AudioContext()
+
+        // Load processor
+        await audioCtx.audioWorklet.addModule("./my-processor.js")
+
+        // Get mic stream
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: false})
+
+        // Create source node
+        const source = audioCtx.createMediaStreamSource(stream)
+
+        // Create processor node
+        myProcessor = new AudioWorkletNode(audioCtx, "my-processor");   // <-- ID
+
+        // Connect source --> processor node
+        source.connect(myProcessor)
+
+        // Connect processor node --> destination
+        myProcessor.connect(audioCtx.destination);
+
+        // Source -> myProcessor -> audioCtx.destination
+
+        myProcessor.port.postMessage(JSON.stringify({
+            key: "level",
+            value: 1.0
+        }))
+    }
+
+    const button = document.getElementById("start_button")
+    button.addEventListener("click", runNodeExample)
+    const level = document.getElementById("level");
+    const level_label = document.getElementById("level_label");
+
+    level.addEventListener("change", (event) => {
+        const level = event.currentTarget.value
+        level_label.innerText = level
+        if(myProcessor) {
+            myProcessor.port.postMessage(JSON.stringify({
+                key: "level",
+                value: level
+            }))
+        }
+    })
+
+</script>
+</body>
+
+</html>

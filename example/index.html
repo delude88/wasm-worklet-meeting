@@ -38,7 +38,7 @@
         const audioCtx = new AudioContext()
 
         // Load processor
-        await audioCtx.audioWorklet.addModule("./my-processor.js")
+        await audioCtx.audioWorklet.addModule("./../public/my-processor.js")
 
         // Get mic stream
         const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: false})

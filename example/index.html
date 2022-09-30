@@ -1,9 +1,23 @@
-<html>
+<html lang="en">
 
 <body>
-<h1>Hello</h1>
+<h1>Benchmark</h1>
 <p>
-    <button id="start_button">START ME NOW</button>
+    <button id="start_benchmark">Start benchmark</button>
+</p>
+<ul>
+    <li>
+        Javascript: <span id="js_time"></span>
+    </li>
+    <li>
+        WASM: <span id="wasm_time"></span>
+    </li>
+</ul>
+<canvas id="canvas" width="1280" height="800"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;"></canvas>
+<h1>Audio worklet</h1>
+<p>
+    <button id="start_audio">Start audio engine</button>
 </p>
 <p>
     <input type="range" id="level" value="1.0" min="0" max="2" step="0.1"/>
@@ -12,33 +26,37 @@
     </label>
 </p>
 
+<script src="../public/benchmark.js"></script>
 <script>
-    //console.log("That's my module -->", Module)
-    // We compiled Module with default parameters, so Module is loaded ASYNC (!)
-    /*
-    Module.postRun = () => {
-        // From here it's safe to use Module
+    const start_benchmark = document.getElementById("start_benchmark")
+    const js_time = document.getElementById("js_time")
+    const wasm_time = document.getElementById("wasm_time")
 
-        // PERFORMANCE COMPARISON
-        const another = new Module.Another();
-        console.log("another", another);
-        another.doIt();
-        const start = performance.now();
-        let bla = 0;
-        //TODO: Sort a million string array by name
-        for(let i = 0; i < 99999999; i++) {
-            bla += (bla * i * 299) / 299;
-        }
-        const end = performance.now();
-        console.log("Needed " + (end - start) +  " ms in JS")
-    }*/
+    const canvasContext = document.getElementById("canvas").getContext('2d')
+
+    async function runBenchmark() {
+        start_benchmark.setAttribute("disabled", "disabled")
+        console.log("Starting js benchmark")
+        let time = await Benchmark.runJavascriptBenchmark(canvasContext)
+        js_time.innerText = `${time}ms`
+        console.log("JS: " + time)
+        console.log("Starting wasm benchmark")
+        time = await Benchmark.runWASMBenchmark(canvasContext)
+        wasm_time.innerText = `${time}ms`
+        console.log("WASM: " + time)
+        start_benchmark.removeAttribute("disabled")
+    }
+
+    start_benchmark.addEventListener("click", runBenchmark)
+</script>
+<script>
     let myProcessor;
 
     async function runNodeExample() {
         const audioCtx = new AudioContext()
 
         // Load processor
-        await audioCtx.audioWorklet.addModule("./../public/my-processor.js")
+        await audioCtx.audioWorklet.addModule("../public/my-processor.js")
 
         // Get mic stream
         const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: false})
@@ -63,15 +81,15 @@
         }))
     }
 
-    const button = document.getElementById("start_button")
-    button.addEventListener("click", runNodeExample)
+    const start_audio_button = document.getElementById("start_audio")
+    start_audio_button.addEventListener("click", runNodeExample)
     const level = document.getElementById("level");
     const level_label = document.getElementById("level_label");
 
     level.addEventListener("change", (event) => {
         const level = event.currentTarget.value
         level_label.innerText = level
-        if(myProcessor) {
+        if (myProcessor) {
             myProcessor.port.postMessage(JSON.stringify({
                 key: "level",
                 value: level

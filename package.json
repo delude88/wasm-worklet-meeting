@@ -6,6 +6,7 @@
   "author": "delude88 <tobias.hegemann@googlemail.com>",
   "license": "MIT",
   "scripts": {
+    "dev": "webpack --mode=development --watch",
     "build:wasm": "cd wasm && ./build.sh",
     "build": "webpack --mode=production"
   },
